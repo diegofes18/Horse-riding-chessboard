@@ -23,10 +23,13 @@ public class Caballos extends JFrame implements MouseListener {
 
     Tauler tauler;
     JPanel lateral;
-    JButton aceptar,borrar,s1,s2,s3;
+    JButton aceptar,borrar,s1,s2,s3,delete;
     JLabel texto;
     int n,i_inicial,j_inicial;
-    int[][]sol1,sol2,sol3;
+    
+    static int[][][]taulers;
+    static int [][]t;
+    static int result=0;
 
     public Caballos(int n) {
         
@@ -34,15 +37,14 @@ public class Caballos extends JFrame implements MouseListener {
         texto=new JLabel(" ");
         texto.setFont(new Font("Arial", Font.PLAIN, 18));
         lateral=new JPanel();
-        sol1=new int[n][n];
-        sol2=new int[n][n];
-        sol3=new int[n][n];
+        this.n=n;
+        taulers=new int[3][n][n];
         tauler = new Tauler(n);
         tauler.addMouseListener(this);
-        borrar=new JButton("Voler a Empezar");
+        borrar=new JButton("Busca Soluciones");
         borrar.setBounds(900, 650, 200, 75);
-//        aceptar=new JButton("ACEPTAR");
-//        aceptar.setBounds(900, 650, 200, 75);
+        delete=new JButton("Borrar");
+        delete.setBounds(900, 550, 200, 75);
         s1=new JButton("SOLUCION 1");
         s2=new JButton("SOLUCION 2");
         s3=new JButton("SOLUCION 3");
@@ -50,14 +52,13 @@ public class Caballos extends JFrame implements MouseListener {
         s2.setBounds(912, 250, 175, 43);
         s3.setBounds(912, 350, 175, 43);
         lateral.setBounds(800,0,400, 827);
-//        lateral.add(aceptar);
         lateral.add(texto);
         this.setPreferredSize(new Dimension(1200, 827));
-//        this.getContentPane().add(aceptar);
         this.getContentPane().add(s1);
         this.getContentPane().add(s2);
         this.getContentPane().add(s3);
         this.getContentPane().add(borrar);
+        this.getContentPane().add(delete);
         this.getContentPane().add(lateral);
         this.getContentPane().add(tauler);
         this.pack();
@@ -72,10 +73,8 @@ public class Caballos extends JFrame implements MouseListener {
                 else{
                     int cx=i_inicial;
                     int cy=j_inicial;
-                    if(problema_caballo(sol1,n,cx,cy,0)){
-                        tauler.asigna(sol1);
-                        tauler.repaint();
-                    }
+                    tauler.asigna(taulers[0]);
+                    tauler.repaint();
                 }
             }
         });
@@ -88,10 +87,8 @@ public class Caballos extends JFrame implements MouseListener {
                 else{
                     int cx=i_inicial;
                     int cy=j_inicial;
-                    if(problema_caballo(sol2,n,cx,cy,1)){
-                        tauler.asigna(sol2);
-                        tauler.repaint();
-                    }
+                    tauler.asigna(taulers[1]);
+                    tauler.repaint();
                 }
             }
         });
@@ -104,10 +101,8 @@ public class Caballos extends JFrame implements MouseListener {
                 else{
                     int cx=i_inicial;
                     int cy=j_inicial;
-                    if(problema_caballo(sol3,n,cx,cy,2)){
-                        tauler.asigna(sol3);
-                        tauler.repaint();
-                    }
+                    tauler.asigna(taulers[2]);
+                    tauler.repaint();
                 }
             }
         });
@@ -118,8 +113,24 @@ public class Caballos extends JFrame implements MouseListener {
                     JOptionPane.showMessageDialog(null,"Ya no hay piezas") ;
                 }
                 else{
+                    
+                   resol(i_inicial,j_inicial);
+                   
+                }
+            }
+        });
+        delete.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                if(!tauler.haypieza()){
+                    JOptionPane.showMessageDialog(null,"Ya no hay piezas") ;
+                }
+                else{
+                   
+                   taulers=new int[3][n][n];
                    tauler.buidatot();
                    tauler.repaint();
+                   result=0;
                 }
             }
         });
@@ -160,67 +171,78 @@ public class Caballos extends JFrame implements MouseListener {
           
         }
     }
-   
-    public static boolean solucion (int [][]tablero, int n, int caballos,int cx,int cy,int sol){
-        
-        if(caballos==n*n){
-            return true; 
-        }
-        int []desp_x={-1,1,-1,1,2,2,-2,-2};
-        int []desp_y={2,2,-2,-2,1,-1,1,-1};
-        //solucion 1
-       if(sol==0){
-        for(int i=0;i<desp_x.length;i++){
-            if(esValido(tablero,cy+desp_y[i],cx+desp_x[i],n)){
-               tablero[cy+desp_y[i]][cx+desp_x[i]] =caballos+1;
-               if(solucion(tablero,n,caballos+1,cx+desp_x[i],cy+desp_y[i],sol)){
-                   return true;
-               }
-               tablero[cy+desp_y[i]][cx+desp_x[i]]=0;
+    public void resol(int cxInicial, int cyInicial) {
+       
+        //Assignam coords inicials al cavall
+        int cx = cxInicial;
+        int cy = cyInicial;
+        int moviments = 1;
+        for (int i = 0; i < 3; i++) {
+            t=new int[n][n];
+            t[cx][cy]=1;
+            if (solucion1(t, n, moviments, cx, cy)) {
+                taulers[result] = t;
+                //mostrarTauler
+                result++;
             }
+            else{
+                JOptionPane.showMessageDialog(null,"No hay solucion, "+result) ;
+            }
+
         }
+    }
+    public  boolean solucion1(int [][]tablero, int n, int caballos,int cx,int cy) {
         
-       }
-       //solucion 2
-        if (sol==1){
-           for(int i=desp_x.length-1;i>0;i--){
-             if(esValido(tablero,cy+desp_y[i],cx+desp_x[i],n)){
-                tablero[cy+desp_y[i]][cx+desp_x[i]] =caballos+1;
-                if(solucion(tablero,n,caballos+1,cx+desp_x[i],cy+desp_y[i],sol)){
+        if ((caballos == n * n) && (noencontrado(tablero))) {
+            System.out.println("Solucion diferente!");
+            return true;
+        }
+
+        int ncx;
+        int ncy;
+        int despX[] = {-2, -2, +2, +2, +1, -1, +1, -1};
+        int despY[] = {+1, -1, -1, +1, +2, +2, -2, -2};
+
+        for (int i = 0; i < despX.length; i++) {
+            ncx = cx + despX[i];
+            ncy = cy + despY[i];
+            if (esValido(tablero, ncx, ncy, n)) {
+                tablero[ncx][ncy]=caballos+1;
+                if (solucion1(tablero, n, caballos + 1, ncx, ncy)) {
+                    taulers[result] = tablero;
                     return true;
                 }
-                tablero[cy+desp_y[i]][cx+desp_x[i]]=0;
-             }
-           }
-       }
-       //solucion 3
-       if(sol==2){
-            int []desp2_x={1,-1,1,-1,2,-2,2,-2};
-            int []desp2_y={-2,-2,2,2,1,1,-1,-1};
-            for(int i=0;i<desp2_x.length;i++){
-                if(esValido(tablero,cy+desp2_y[i],cx+desp2_x[i],n)){
-                   tablero[cy+desp2_y[i]][cx+desp2_x[i]] =caballos+1;
-                   if(solucion(tablero,n,caballos+1,cx+desp2_x[i],cy+desp2_y[i],sol)){
-                       return true;
-                   }
-                   tablero[cy+desp2_y[i]][cx+desp2_x[i]]=0;
-                }
+                tablero[ncx][ncy]=0;
             }
-       }
-       return false;
+        }
+        return false;
     }
     
-   public static boolean problema_caballo(int [][]tablero,int n,int cx,int cy,int sol){
-        tablero[cx][cy]=1;
-        return solucion(tablero,n,1,cx,cy,sol);
+    public  boolean noencontrado(int[][] t) {
+        for (int i = 0; i < 3; i++) {
+            if (iguales(t,taulers[i])) {
+                return false;
+            }
+        }
+        return true;
     }
-    
+    public boolean iguales(int [][]t,int[][]h){
+        for(int x=0;x<n;x++){
+            for(int y=0;y<n;y++){
+               if(t[x][y]!=h[x][y]){
+                   return false;
+               }       
+            }
+        }
+        return true;
+    }
     public static boolean esValido(int [][]tablero,int f,int c,int n){
         if(f<0 || f>n-1 || c<0 || c>n-1 || tablero[f][c]!=0){
             return false;
         }
         return true;
     }
+   
     @Override
     public void mouseEntered(MouseEvent e) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
